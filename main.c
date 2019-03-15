@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define SHOW_CARDS 1
+#define SHOW_SCORE 1
+
 struct Card{
   char ID;
   char suit;
@@ -52,6 +55,7 @@ void sort_3(int value_array[3], int index_array[3]);
 int find_15_4(struct Hand_4 hand);
 int find_multi_4(struct Hand_4 hand);
 int find_run_4(struct Hand_4 hand);
+int find_flush_4(struct Hand_4 hand);
 /**Prototypes**/
 
 int main(void){
@@ -214,7 +218,7 @@ void score_6(struct Hand_6 hand){
   struct Hand_4 sub_hand;
   int points_hand = 0;
 
-  print_hand_6(hand);
+  (SHOW_CARDS) ? (print_hand_6(hand)) : 0;
   printf("\n");
   
   for(int hand_index = 0; hand_index < 15; hand_index++){
@@ -222,11 +226,16 @@ void score_6(struct Hand_6 hand){
       index_array[i] = combinations[hand_index][i];
     }
     hand_copy_4_6(hand, &sub_hand, index_array);
-    print_hand_4(sub_hand);
+    (SHOW_CARDS) ? (print_hand_4(sub_hand)) : 0;
     points_hand = find_15_4(sub_hand);
     points_hand += find_multi_4(sub_hand);
     points_hand += find_run_4(sub_hand);
-    printf("->%d Points\n\n", points_hand);
+    points_hand += find_flush_4(sub_hand);
+    if(SHOW_SCORE){
+      printf("->%d Points\n\n", points_hand);
+    } else {
+      printf("%d\n", points_hand);
+    }
   }
 }
 
@@ -258,7 +267,7 @@ int find_15_4(struct Hand_4 hand){
   }
 
   if(temp_sum == 15){
-    printf("All cards sum to 15\n");
+    (SHOW_SCORE) ? (printf("All cards sum to 15\n")) : 0;
     return 2;
   } else {
     temp_sum = 0;
@@ -270,11 +279,11 @@ int find_15_4(struct Hand_4 hand){
     }
     if(temp_sum == 15){
       total_points += 2;
-      printf("15 found from: ");
+      (SHOW_SCORE) ? (printf("15 found from: ")) : 0;
       for(int i = 0; i < 3; i++){
-	printf(" %c%c", hand.contents[combinations_3[j][i] - 1].ID, hand.contents[combinations_3[j][i] - 1].suit);
+	(SHOW_SCORE) ? (printf(" %c%c", hand.contents[combinations_3[j][i] - 1].ID, hand.contents[combinations_3[j][i] - 1].suit)) : 0;
       }
-      printf("\n");
+      (SHOW_SCORE) ? (printf("\n")) : 0;
     }
     temp_sum = 0;
   }
@@ -285,11 +294,11 @@ int find_15_4(struct Hand_4 hand){
     }
     if(temp_sum == 15){
       total_points += 2;
-      printf("15 found from: ");
+      (SHOW_SCORE) ? (printf("15 found from: ")) : 0;
       for(int i = 0; i < 2; i++){
-	printf(" %c%c", hand.contents[combinations_2[j][i] - 1].ID, hand.contents[combinations_2[j][i] - 1].suit);
+	(SHOW_SCORE) ? (printf(" %c%c", hand.contents[combinations_2[j][i] - 1].ID, hand.contents[combinations_2[j][i] - 1].suit)) : 0;
       }
-      printf("\n");
+      (SHOW_SCORE) ? (printf("\n")) : 0;
     }
     temp_sum = 0;
   }
@@ -311,11 +320,11 @@ int find_multi_4(struct Hand_4 hand){
 
     if(ID_1 == ID_2){
       total_points += 2;
-      printf("Pair found from: ");
+      (SHOW_SCORE) ? (printf("Pair found from: ")) : 0;
       for(int i = 0; i < 2; i++){
-	printf(" %c%c", hand.contents[combinations_2[j][i] - 1].ID, hand.contents[combinations_2[j][i] - 1].suit);
+	(SHOW_SCORE) ? (printf(" %c%c", hand.contents[combinations_2[j][i] - 1].ID, hand.contents[combinations_2[j][i] - 1].suit)) : 0;
       }
-      printf("\n");
+      (SHOW_SCORE) ? (printf("\n")) : 0;
     }
   }
   return total_points;
@@ -337,7 +346,7 @@ int find_run_4(struct Hand_4 hand){
   if(value_array[1] == (value_array[0] + 1)){
     if(value_array[2] == (value_array[1] + 1)){
       if(value_array[3] == (value_array[2] + 1)){
-	printf("Run of 4\n");
+	(SHOW_SCORE) ? (printf("Run of 4\n")) : 0;
 	return 4;
       }
     }
@@ -347,21 +356,20 @@ int find_run_4(struct Hand_4 hand){
   int combinations_3[4][3] = { {1,2,3}, {1,2,4},	\
 			       {1,3,4}, {2,3,4} };
 
-  //THIS DOES NOT WORK 
   for(int j = 0; j < 4; j++){
     for(int i = 0; i < 3; i++){
       value_array_3[i] = ID_to_index(hand.contents[combinations_3[j][i] - 1].ID);
       index_array_3[i] = combinations_3[j][i] - 1;
-      sort_3(value_array_3, index_array_3);
-      if(value_array_3[1] == (value_array_3[0] + 1)){
-	if(value_array_3[2] == (value_array_3[1] + 1)){
-	  printf("Run of 3\n");
-	  for(int x = 0; x < 3; x++){
-	    printf("%d ", value_array_3[x]);
-	  }
-	  printf("\n");
-	  total_points += 2;
+    }
+    sort_3(value_array_3, index_array_3);
+    if(value_array_3[1] == (value_array_3[0] + 1)){
+      if(value_array_3[2] == (value_array_3[1] + 1)){
+	(SHOW_SCORE) ? (printf("Run of 3:")) : 0;
+	for(int x = 0; x < 3; x++){
+	  (SHOW_SCORE) ? (printf(" %c%c", hand.contents[index_array_3[x]].ID, hand.contents[index_array_3[x]].suit)) : 0;
 	}
+	(SHOW_SCORE) ? (printf("\n")) : 0;
+	total_points += 3;
       }
     }
   }
@@ -434,4 +442,23 @@ void sort_3(int value_array[3], int index_array[3]){
       index_array[2] = temp;
     }
   }
+}
+
+int find_flush_4(struct Hand_4 hand){
+  char base_suit = hand.contents[0].suit;
+  if(base_suit == hand.contents[1].suit){
+    if(hand.contents[1].suit == hand.contents[2].suit){
+      if(hand.contents[2].suit == hand.contents[3].suit){
+	if(SHOW_SCORE){
+	  printf("Flush of ");
+	  (base_suit == 'H') ? (printf("Hearts\n")) : 0;
+	  (base_suit == 'C') ? (printf("Clubs\n")) : 0;
+	  (base_suit == 'D') ? (printf("Diamonds\n")) : 0;
+	  (base_suit == 'S') ? (printf("Spades\n")) : 0;
+	}
+	return 4;
+      }
+    }
+  }
+  return 0;
 }
