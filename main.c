@@ -44,6 +44,14 @@ void fill_shuffle_map(int shuffle_map[52]);
 void deal_hand_6(struct Deck_52 deck, struct Deck_46* dst_deck, struct Hand_6* dst_hand);
 void score_6(struct Hand_6 hand);
 void hand_copy_4_6(struct Hand_6 src_hand, struct Hand_4* dst_hand, int index_map[4]);
+int ID_to_index(char index);
+void sort_4(int value_array[4], int index_array[4]);
+void sort_3(int value_array[3], int index_array[3]);
+
+//Scoring functions
+int find_15_4(struct Hand_4 hand);
+int find_multi_4(struct Hand_4 hand);
+int find_run_4(struct Hand_4 hand);
 /**Prototypes**/
 
 int main(void){
@@ -88,6 +96,24 @@ void print_hand_4(struct Hand_4 hand){
   for(int i = 0; i < 4; i++){
     print_card(hand.contents[i]);
   }
+}
+
+int ID_to_index(char index){
+  int val = 0;
+  (index == '1') ? (val = 1) : 0;
+  (index == '2') ? (val = 2) : 0;
+  (index == '3') ? (val = 3) : 0;
+  (index == '4') ? (val = 4) : 0;
+  (index == '5') ? (val = 5) : 0;
+  (index == '6') ? (val = 6) : 0;
+  (index == '7') ? (val = 7) : 0;
+  (index == '8') ? (val = 8) : 0;
+  (index == '9') ? (val = 9) : 0;
+  (index == 'T') ? (val = 10) : 0;
+  (index == 'J') ? (val = 11) : 0;
+  (index == 'Q') ? (val = 12) : 0;
+  (index == 'K') ? (val = 13) : 0;
+  return val;
 }
 
 //Fills up a 52 card deck
@@ -186,6 +212,7 @@ void score_6(struct Hand_6 hand){
 			      {2,3,5,6}, {2,4,5,6}, {3,4,5,6} };
   int index_array[4] = {0,0,0,0};
   struct Hand_4 sub_hand;
+  int points_hand = 0;
 
   print_hand_6(hand);
   printf("\n");
@@ -196,7 +223,10 @@ void score_6(struct Hand_6 hand){
     }
     hand_copy_4_6(hand, &sub_hand, index_array);
     print_hand_4(sub_hand);
-    printf("\n");
+    points_hand = find_15_4(sub_hand);
+    points_hand += find_multi_4(sub_hand);
+    points_hand += find_run_4(sub_hand);
+    printf("->%d Points\n\n", points_hand);
   }
 }
 
@@ -210,3 +240,198 @@ void hand_copy_4_6(struct Hand_6 src_hand, struct Hand_4* dst_hand, int index_ma
 //or something like that, to check for doubles, triples ECT....
 //This needs to be planned out well on paper
 //Flowchart with all scoring routes
+
+int find_15_4(struct Hand_4 hand){
+  //This checks all the subsets of minimum size 2
+  int combinations_2[6][2] = { {1,2}, {1,3}, {1,4},	\
+			       {2,3}, {2,4}, {3,4} };
+
+  int combinations_3[4][3] = { {1,2,3}, {1,2,4},	\
+			       {1,3,4}, {2,3,4} };
+
+  int combinations_4[4] = {1,2,3,4};
+
+  int temp_sum = 0;
+  int total_points = 0;
+  for(int i = 0; i < 4; i++){
+    temp_sum += hand.contents[combinations_4[i] - 1].val;
+  }
+
+  if(temp_sum == 15){
+    printf("All cards sum to 15\n");
+    return 2;
+  } else {
+    temp_sum = 0;
+  }
+
+  for(int j = 0; j < 4; j++){
+    for(int i = 0; i < 3; i++){
+      temp_sum += hand.contents[combinations_3[j][i] - 1].val;
+    }
+    if(temp_sum == 15){
+      total_points += 2;
+      printf("15 found from: ");
+      for(int i = 0; i < 3; i++){
+	printf(" %c%c", hand.contents[combinations_3[j][i] - 1].ID, hand.contents[combinations_3[j][i] - 1].suit);
+      }
+      printf("\n");
+    }
+    temp_sum = 0;
+  }
+
+  for(int j = 0; j < 6; j++){
+    for(int i = 0; i < 2; i++){
+      temp_sum += hand.contents[combinations_2[j][i] - 1].val;
+    }
+    if(temp_sum == 15){
+      total_points += 2;
+      printf("15 found from: ");
+      for(int i = 0; i < 2; i++){
+	printf(" %c%c", hand.contents[combinations_2[j][i] - 1].ID, hand.contents[combinations_2[j][i] - 1].suit);
+      }
+      printf("\n");
+    }
+    temp_sum = 0;
+  }
+
+  return total_points;
+}
+
+int find_multi_4(struct Hand_4 hand){
+  int total_points = 0;
+  int combinations_2[6][2] = { {1,2}, {1,3}, {1,4},	\
+			       {2,3}, {2,4}, {3,4} };
+
+  char ID_1;
+  char ID_2;
+  
+  for(int j = 0; j < 6; j++){
+    ID_1 = hand.contents[combinations_2[j][0] - 1].ID;
+    ID_2 = hand.contents[combinations_2[j][1] - 1].ID;
+
+    if(ID_1 == ID_2){
+      total_points += 2;
+      printf("Pair found from: ");
+      for(int i = 0; i < 2; i++){
+	printf(" %c%c", hand.contents[combinations_2[j][i] - 1].ID, hand.contents[combinations_2[j][i] - 1].suit);
+      }
+      printf("\n");
+    }
+  }
+  return total_points;
+}
+
+int find_run_4(struct Hand_4 hand){
+  int value_array[4];
+  int index_array[4];
+  int value_array_3[3];
+  int index_array_3[3];
+  int total_points = 0;
+  for(int i = 0; i < 4; i++){
+    value_array[i] = ID_to_index(hand.contents[i].ID);
+    index_array[i] = i;
+  }
+
+  sort_4(value_array, index_array);
+  
+  if(value_array[1] == (value_array[0] + 1)){
+    if(value_array[2] == (value_array[1] + 1)){
+      if(value_array[3] == (value_array[2] + 1)){
+	printf("Run of 4\n");
+	return 4;
+      }
+    }
+  }
+
+  //Now check all possible runs of 3
+  int combinations_3[4][3] = { {1,2,3}, {1,2,4},	\
+			       {1,3,4}, {2,3,4} };
+
+  //THIS DOES NOT WORK 
+  for(int j = 0; j < 4; j++){
+    for(int i = 0; i < 3; i++){
+      value_array_3[i] = ID_to_index(hand.contents[combinations_3[j][i] - 1].ID);
+      index_array_3[i] = combinations_3[j][i] - 1;
+      sort_3(value_array_3, index_array_3);
+      if(value_array_3[1] == (value_array_3[0] + 1)){
+	if(value_array_3[2] == (value_array_3[1] + 1)){
+	  printf("Run of 3\n");
+	  for(int x = 0; x < 3; x++){
+	    printf("%d ", value_array_3[x]);
+	  }
+	  printf("\n");
+	  total_points += 2;
+	}
+      }
+    }
+  }
+  
+  return total_points;
+}
+
+//Sort the array and preserve original indexes
+void sort_4(int value_array[4], int index_array[4]){
+  int changes = 1;
+  int temp = 0;
+  while(changes){
+    changes = 0;
+    if(value_array[0] > value_array[1]){
+      changes++;
+      temp = value_array[0];
+      value_array[0] = value_array[1];
+      value_array[1] = temp;
+
+      temp = index_array[0];
+      index_array[0] = index_array[1];
+      index_array[1] = temp;
+    }
+    if(value_array[1] > value_array[2]){
+      changes++;
+      temp = value_array[1];
+      value_array[1] = value_array[2];
+      value_array[2] = temp;
+
+      temp = index_array[1];
+      index_array[1] = index_array[2];
+      index_array[2] = temp;
+    }
+    if(value_array[2] > value_array[3]){
+      changes++;
+      temp = value_array[2];
+      value_array[2] = value_array[3];
+      value_array[3] = temp;
+
+      temp = index_array[2];
+      index_array[2] = index_array[3];
+      index_array[3] = temp;
+    }
+  }
+}
+
+void sort_3(int value_array[3], int index_array[3]){
+  int changes = 1;
+  int temp = 0;
+  while(changes){
+    changes = 0;
+    if(value_array[0] > value_array[1]){
+      changes++;
+      temp = value_array[0];
+      value_array[0] = value_array[1];
+      value_array[1] = temp;
+
+      temp = index_array[0];
+      index_array[0] = index_array[1];
+      index_array[1] = temp;
+    }
+    if(value_array[1] > value_array[2]){
+      changes++;
+      temp = value_array[1];
+      value_array[1] = value_array[2];
+      value_array[2] = temp;
+
+      temp = index_array[1];
+      index_array[1] = index_array[2];
+      index_array[2] = temp;
+    }
+  }
+}
